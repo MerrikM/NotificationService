@@ -14,6 +14,7 @@ type Consumer struct {
 }
 
 type ConsumerInterface interface {
+	ConsumeMessage() error
 	Close() error
 }
 

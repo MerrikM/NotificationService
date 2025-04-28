@@ -3,8 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/IBM/sarama"
+	"notificationservice/internal/DTO"
 )
 
 type Producer struct {
@@ -16,8 +16,13 @@ type Producer struct {
 }
 
 type ProducerInterface interface {
-	ProducerMessage(data interface{}) error
+	ProduceMessage(data interface{}) error
 	Close() error
+}
+
+type UserNotifier interface {
+	NotifyUserCreated(user *DTO.User) error
+	NotifyUserUpdated(user *DTO.User) error
 }
 
 func NewProducer(brokers []string, topic string) (ProducerInterface, error) {
@@ -58,7 +63,7 @@ func (producer *Producer) Close() error {
 	return nil
 }
 
-func (producer *Producer) ProducerMessage(data interface{}) error {
+func (producer *Producer) ProduceMessage(data interface{}) error {
 	var byteData []byte
 	var err error
 
