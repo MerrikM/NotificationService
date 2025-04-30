@@ -37,32 +37,27 @@ func NewCustomConsumerGroup(brokers []string, groupID string, topics []string) (
 	}, nil
 }
 
-func (c *CustomConsumerGroup) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (c *CustomConsumerGroup) Setup(sarama.ConsumerGroupSession) error { return nil }
+
 func (c *CustomConsumerGroup) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+
 func (c *CustomConsumerGroup) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	// Цикл для чтения сообщений из Kafka
 	for msg := range claim.Messages() {
 
-		// Логируем полученное сообщение
 		log.Printf("Получено сообщение: %s", string(msg.Value))
 
-		// Десериализация сообщения в структуру User
 		var user DTO.User
 		err := json.Unmarshal(msg.Value, &user)
 		if err != nil {
 			fmt.Errorf("ошибка десериализации сообщения: %v", err)
 			continue
 		}
-
-		// Логируем информацию о пользователе
-		log.Printf("Получен пользователь: %+v", user)
-
-		// Преобразовываем DTO.User в Notification
+		
 		notification := Notification{
 			UserID:  user.ID,
-			Message: user.Event, // Замените на нужное вам поле, например, user.Name или user.EventType
+			Message: user.Event,
 		}
-		// ConsumeClaim
+
 		log.Printf("Отправка уведомления в канал для userID=%d: %+v", notification.UserID, notification)
 		Broadcast <- notification
 
