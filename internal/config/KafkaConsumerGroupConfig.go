@@ -37,7 +37,6 @@ func NewCustomConsumerGroup(brokers []string, groupID string, topics []string) (
 	}, nil
 }
 
-// Реализация интерфейса sarama.ConsumerGroupHandler
 func (c *CustomConsumerGroup) Setup(sarama.ConsumerGroupSession) error   { return nil }
 func (c *CustomConsumerGroup) Cleanup(sarama.ConsumerGroupSession) error { return nil }
 func (c *CustomConsumerGroup) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
