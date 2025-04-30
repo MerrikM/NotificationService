@@ -4,7 +4,6 @@ import (
 	"golang.org/x/net/context"
 	"log"
 	"net/http"
-	"notificationservice/internal/WebSocket"
 	"notificationservice/internal/config"
 )
 
@@ -15,7 +14,7 @@ var groupID = "user-notifier-group"
 
 func main() {
 
-	go WebSocket.StartWebSocketServer("8089")
+	go config.StartWebSocketServer("8089")
 
 	// Создаём кастомную ConsumerGroup
 	consumerGroup, err := config.NewCustomConsumerGroup(brokers, groupID, topics)
