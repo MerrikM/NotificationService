@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/IBM/sarama"
 )
 
@@ -14,6 +13,7 @@ type Consumer struct {
 }
 
 type ConsumerInterface interface {
+	ConsumeMessage() (string, error)
 	Close() error
 }
 
@@ -49,14 +49,15 @@ func (consumer *Consumer) Close() error {
 	return nil
 }
 
-func (consumer *Consumer) ConsumeMessage() error {
+func (consumer *Consumer) ConsumeMessage() (string, error) {
 	partitionConsumer, err := consumer.Consumer.ConsumePartition(consumer.Topic, consumer.Partition, sarama.OffsetNewest)
 	if err != nil {
-		return fmt.Errorf("ошибка в партициях: %v", err)
+		return "", fmt.Errorf("ошибка в партициях: %v", err)
 	}
-
-	for message := range partitionConsumer.Messages() {
-		fmt.Println(string(message.Value))
+	message := <-partitionConsumer.Messages()
+	if message == nil {
+		return "", fmt.Errorf("канал сообщений закрыт")
 	}
-	return nil
+	fmt.Println("Message: ", string(message.Value))
+	return string(message.Value), nil
 }

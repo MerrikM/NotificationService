@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>WebSocket Client</title>
+</head>
+<body>
+<h2>WebSocket Test</h2>
+
+<div id="notification"></div> <!-- Добавим элемент для отображения уведомлений -->
+
+<script>
+    const userID = 28; // Пример userID
+    const socket = new WebSocket(`ws://localhost:8089/ws?user-ID=${userID}`);
+
+    socket.onopen = () => {
+        console.log("Соединение установлено");
+        socket.send("ping");
+    };
+
+    socket.onmessage = (event) => {
+        console.log("Raw data:", event.data); // Добавьте это!
+
+        try {
+            const data = JSON.parse(event.data);
+            console.log("Parsed:", data);
+
+            if (data.user_id && data.message) {
+                document.getElementById('notification').innerHTML = `
+                <p>User: ${data.user_id}</p>
+                <p>Event: ${data.message}</p>
+            `;
+            }
+        } catch (err) {
+            console.error("Parse error:", err);
+        }
+    };
+
+    socket.onerror = (e) => {
+        console.error("Ошибка соединения:", e);
+    };
+
+    socket.onclose = () => {
+        console.log("Соединение закрыто");
+    };
+</script>
+</body>
+</html>
