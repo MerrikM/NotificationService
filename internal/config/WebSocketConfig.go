@@ -105,7 +105,7 @@ func HandleBroadcasts() {
 	}
 }
 
-func StartWebSocketServer(port string) {
+func StartWebSocketServer(port string) error {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		if err := HandleConnections(w, r); err != nil {
 			log.Println(err)
@@ -120,6 +120,8 @@ func StartWebSocketServer(port string) {
 	log.Printf("WebSocket сервер запущен на порту %s", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		log.Fatalf("Ошибка запуска сервера: %v", err)
+		return fmt.Errorf("ошибка запуска сервера: %v", err)
 	}
+
+	return nil
 }
