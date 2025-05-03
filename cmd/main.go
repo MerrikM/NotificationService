@@ -3,8 +3,12 @@ package main
 import (
 	"golang.org/x/net/context"
 	"log"
-	"net/http"
 	"notificationservice/internal/config"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 )
 
 var brokers []string = []string{"localhost:9093"}
@@ -13,20 +17,35 @@ var topic = "user-event"
 var groupID = "user-notifier-group"
 
 func main() {
+	context, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	go config.StartWebSocketServer("8089")
+	var waitGroup sync.WaitGroup
 
-	// Создаём кастомную ConsumerGroup
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		if err := config.StartWebSocketServer("8089"); err != nil {
+			log.Printf("веб-сокет не стартовал: %v", err)
+			cancel()
+		}
+	}()
+
 	consumerGroup, err := config.NewCustomConsumerGroup(brokers, groupID, topics)
 	if err != nil {
 		log.Fatalf("Ошибка инициализации ConsumerGroup: %v", err)
 	}
 
-	context, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	// Запуск Kafka consumer
+	waitGroup.Add(1)
 	go func() {
+		defer waitGroup.Done()
+		defer func() {
+			err := consumerGroup.Group.Close()
+			if err != nil {
+				log.Printf("Не получилось закрыть ConsumerGroup: %v", err)
+			}
+		}()
 		for {
 			select {
 			case <-context.Done():
@@ -38,20 +57,23 @@ func main() {
 				err := consumerGroup.Group.Consume(context, consumerGroup.Topics, consumerGroup)
 				if err != nil {
 					log.Printf("Ошибка Consume(): %v", err)
+					select {
+					case <-context.Done():
+						return
+					case <-time.After(5 * time.Second):
+					}
 				}
 			}
 		}
 	}()
 
-	select {}
-}
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-signalChannel
+		cancel()
+	}()
 
-func healthCheckHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusOK)
-	log.Println("Сервер рабоатет!")
-}
-
-func notifyHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusNotImplemented)
-	log.Println("Временная заглушка")
+	waitGroup.Wait()
+	log.Println("все горутины остановились")
 }
