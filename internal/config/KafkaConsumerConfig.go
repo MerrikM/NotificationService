@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/IBM/sarama"
+	"notificationservice/internal/Kafka"
 )
 
 type Consumer struct {
@@ -12,12 +13,7 @@ type Consumer struct {
 	Partition int32
 }
 
-type ConsumerInterface interface {
-	ConsumeMessage() (string, error)
-	Close() error
-}
-
-func NewConsumer(brokers []string, topic string, partition int32) (ConsumerInterface, error) {
+func NewConsumer(brokers []string, topic string, partition int32) (Kafka.ConsumerInterface, error) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 

@@ -2,16 +2,15 @@ package Producer
 
 import (
 	"notificationservice/internal/DTO"
-	"notificationservice/internal/Event"
-	"notificationservice/internal/config"
+	"notificationservice/internal/Kafka"
 )
 
 type UserProducer struct {
-	producer config.ProducerInterface
+	producer Kafka.ProducerInterface
 	topic    string
 }
 
-func NewUserProducer(prodcuer config.ProducerInterface, topic string) *UserProducer {
+func NewUserProducer(prodcuer Kafka.ProducerInterface, topic string) *UserProducer {
 	return &UserProducer{
 		producer: prodcuer,
 		topic:    topic,
@@ -19,17 +18,9 @@ func NewUserProducer(prodcuer config.ProducerInterface, topic string) *UserProdu
 }
 
 func (userProducer *UserProducer) NotifyUserCreated(user *DTO.User) error {
-	event := &Event.UserEvent{
-		EventType: "user_created",
-		User:      user,
-	}
-	return userProducer.producer.ProduceMessage(event)
+	return nil
 }
 
 func (userProducer *UserProducer) NotifyUserUpdated(user *DTO.User) error {
-	event := &Event.UserEvent{
-		EventType: "user_updated",
-		User:      user,
-	}
-	return userProducer.producer.ProduceMessage(event)
+	return nil
 }

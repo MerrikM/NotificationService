@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/IBM/sarama"
-	"notificationservice/internal/DTO"
+	"notificationservice/internal/Kafka"
 )
 
 type Producer struct {
@@ -15,17 +15,7 @@ type Producer struct {
 	Config   *sarama.Config
 }
 
-type ProducerInterface interface {
-	ProduceMessage(data interface{}) error
-	Close() error
-}
-
-type UserNotifier interface {
-	NotifyUserCreated(user *DTO.User) error
-	NotifyUserUpdated(user *DTO.User) error
-}
-
-func NewProducer(brokers []string, topic string) (ProducerInterface, error) {
+func NewProducer(brokers []string, topic string) (Kafka.ProducerInterface, error) {
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	// "распределение по кругу" между партициями.
