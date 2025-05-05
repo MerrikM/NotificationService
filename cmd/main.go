@@ -3,6 +3,8 @@ package main
 import (
 	"golang.org/x/net/context"
 	"log"
+	"notificationservice/internal/UsersNotifier/Consumer"
+	"notificationservice/internal/WebSocket"
 	"notificationservice/internal/config"
 	"os"
 	"os/signal"
@@ -25,7 +27,7 @@ func main() {
 	waitGroup.Add(1)
 	go func() {
 		defer waitGroup.Done()
-		if err := config.StartWebSocketServer("8089"); err != nil {
+		if err := WebSocket.StartWebSocketServer("8089"); err != nil {
 			log.Printf("веб-сокет не стартовал: %v", err)
 			cancel()
 		}
@@ -35,6 +37,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка инициализации ConsumerGroup: %v", err)
 	}
+
+	handler := &Consumer.Handler{}
 
 	// Запуск Kafka consumer
 	waitGroup.Add(1)
@@ -54,7 +58,7 @@ func main() {
 			default:
 				log.Println("Начинаем потребление сообщений...")
 				// Вызываем Consume, который в свою очередь вызывает ConsumeClaim
-				err := consumerGroup.Group.Consume(context, consumerGroup.Topics, consumerGroup)
+				err := consumerGroup.Group.Consume(context, consumerGroup.Topics, handler)
 				if err != nil {
 					log.Printf("Ошибка Consume(): %v", err)
 					select {
