@@ -1,4 +1,4 @@
-package config
+package WebSocket
 
 import (
 	"fmt"
@@ -15,21 +15,6 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-
-type Notification struct {
-	UserID  int64
-	Message string
-}
-
-type Client struct {
-	UserID     int64
-	Connection *websocket.Conn
-}
-
-var (
-	clients   = make(map[int64]*Client) // Мапа подключенных клиентов
-	Broadcast = make(chan Notification) // Канал для рассылки уведомлений
-)
 
 // HandleConnections обрабатывает подключение клиента через WebSocket
 func HandleConnections(writer http.ResponseWriter, request *http.Request) error {
@@ -70,39 +55,6 @@ func HandleConnections(writer http.ResponseWriter, request *http.Request) error 
 		}
 	}
 	return nil
-}
-
-func RemoveClient(userID int64) {
-	if client, exists := clients[userID]; exists {
-		log.Printf("Закрытие соединения для userID=%d", userID)
-		client.Connection.Close()
-		delete(clients, userID)
-	}
-}
-
-// HandleBroadcasts рассылает уведомления клиентам
-func HandleBroadcasts() {
-	for notification := range Broadcast {
-		log.Printf("Получение уведомления для userID=%d: %+v", notification.UserID, notification)
-
-		// Проверяем, существует ли клиент в мапе
-		if client, exists := clients[notification.UserID]; exists {
-			log.Printf("Отправка уведомления для userID=%d через WebSocket", notification.UserID)
-
-			// Отправка уведомления через WebSocket
-			err := client.Connection.WriteJSON(notification)
-			if err != nil {
-				log.Printf("Ошибка отправки уведомления: user_id=%d, error: %v", notification.UserID, err)
-
-				// Закрытие соединения и удаление клиента из мапы
-				RemoveClient(notification.UserID)
-			} else {
-				log.Printf("Уведомление отправлено пользователю с userID=%d", notification.UserID)
-			}
-		} else {
-			log.Printf("Клиент с userID=%d не найден в мапе", notification.UserID)
-		}
-	}
 }
 
 func StartWebSocketServer(port string) error {
